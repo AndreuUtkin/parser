@@ -1,8 +1,7 @@
 Установка зависимостей через poetry:
 ***************************************
-.venv\Scripts\activate
-poetry install
-.venv/Scripts/python.exe main.py
+poetry install<br>
+poetry shell<br>
 ***************************************************
 Через pip:
 pip install requests beautifulsoup4 pandas openpyxl lxml
