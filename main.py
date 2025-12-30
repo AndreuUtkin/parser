@@ -1,49 +1,55 @@
+#!/usr/bin/env python3
 import sys
 import logging
-from typing import List
-from src.parser import Parser
-from src.excel_exporter import ExcelExporter
+from parser.parser import RialcomParser
+from excel_exporter import ExcelExporter
+from config import Constants, Messages
 
-# Настройка логирования
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler('parser.log', encoding='utf-8')
-    ]
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 
-logger = logging.getLogger(__name__)
+def print_statistics(tariffs):
+    """Красивая статистика"""
+    from parser.tariff_processor import TariffProcessor
+    stats = TariffProcessor.get_statistics(tariffs)
+    
+    print("\n" + "="*50)
+    print("СТАТИСТИКА ПАРСИНГА")
+    print("="*50)
+    print(f"Всего тарифов: {stats['total']}")
+    print(f"Ожидалось: {stats['expected']}")
+    print(f"Разница: {stats['difference']} ({stats['percentage']}%)")
+    print("="*50)
 
 def main():
-    
     try:
+        # Создаем парсер
+        parser = RialcomParser()
         
-        parser = Parser()
-        
-        print("\n Сбор тарифов ...")
+        # Парсим
         tariffs = parser.parse_all()
         
         if not tariffs:
-            print("\n Нет тарифов")
-            sys.exit(1)
-        else:
-            print(f"\n Успех! Собрано {len(tariffs)} тарифов")
+            print("❌ Тарифы не найдены!")
+            return 1
         
-        print("\n Экспортируем в Excel...")
-        exporter = ExcelExporter("tariffs.xlsx")
+        # Статистика
+        print_statistics(tariffs)
+        
+        # Экспорт
+        exporter = ExcelExporter(Constants.OUTPUT_FILENAME)
         exporter.export_to_excel(tariffs)
         
+        print(f"\n✅ Файл сохранен: {Constants.OUTPUT_FILENAME}")
         return 0
         
     except KeyboardInterrupt:
-        print("\n\n Остановка")
+        print("\n⏹️ Остановлено пользователем")
         return 130
     except Exception as e:
-        logger.error(f"Критическая ошибка: {e}")
-        import traceback
-        traceback.print_exc()
+        print(f"\n❌ Ошибка: {e}")
         return 1
 
 if __name__ == "__main__":
